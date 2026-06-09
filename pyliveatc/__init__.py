@@ -14,10 +14,12 @@ from .scraper import (
     search,
 )
 from .archive import (
+    ARCHIVE_TIME_SLOTS,
     build_archive_url,
     download_archive_file,
     download_range,
     fetch_archive_listing,
+    list_archive_facilities,
     parse_archive_html,
 )
 from .dataset import (
@@ -39,8 +41,9 @@ __all__ = [
     "parse_feedindex_html", "parse_search_html", "parse_topfeeds_html",
     "search",
     # archive
+    "ARCHIVE_TIME_SLOTS",
     "build_archive_url", "download_archive_file", "download_range",
-    "fetch_archive_listing", "parse_archive_html",
+    "fetch_archive_listing", "list_archive_facilities", "parse_archive_html",
     # dataset
     "export_all", "export_archives_jsonl", "export_feeds_jsonl",
     "export_topfeeds_jsonl",

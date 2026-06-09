@@ -1,4 +1,17 @@
-"""Archive listing and download helpers for liveatc.net."""
+"""Archive listing and download helpers for liveatc.net.
+
+The /archive.php page has two <select> elements:
+  1. facility — human-readable names (e.g. "KJFK Gnd/Twr"), value is a
+     facility key (e.g. "KJFK-GndTwr") — NOT the Icecast mount_id.
+  2. time — "HHMM-HHMMZ" slot options for the current UTC date.
+
+Submitting the form POSTs to /archive.php which redirects to a CDN URL:
+  https://archive.liveatc.net/{mount_id}/{mount_id}-YYYYMMDD-HHMMZ.mp3
+
+Since we know the mount_id and want specific dates/times, we construct
+archive URLs directly using the well-known pattern rather than scraping
+the form — no form POST needed.
+"""
 import re
 from pathlib import Path
 from typing import List, Optional
@@ -12,13 +25,24 @@ _ARCHIVE_FILE_RE = re.compile(
     r"([a-zA-Z0-9_]+)-(\d{8})-(\d{4}Z)\.mp3", re.IGNORECASE
 )
 
+# Time slots available on the archive page (48 per day)
+ARCHIVE_TIME_SLOTS = [
+    f"{h:02d}{m:02d}Z"
+    for h in range(24)
+    for m in (0, 30)
+]
+
 
 def parse_archive_html(html: str, mount_id: str) -> List[ArchiveFile]:
-    """Parse /archive.php?m={mount_id} → list of ArchiveFile."""
+    """Parse /archive.php?m={mount_id} → list of ArchiveFile.
+
+    Constructs CDN URLs directly from the time-slot select options,
+    since the form itself requires POST + redirect to resolve the file.
+    """
     soup = BeautifulSoup(html, "lxml")
     results = []
 
-    # Archive page lists select options with filenames, and/or direct links
+    # Try direct MP3 option values first (older page format)
     for option in soup.find_all("option"):
         value = option.get("value", "")
         m = _ARCHIVE_FILE_RE.search(value)
@@ -66,6 +90,27 @@ def fetch_archive_listing(mount_id: str,
     t = transport or default_transport()
     html = t.get_text("/archive.php", params={"m": mount_id})
     return parse_archive_html(html, mount_id)
+
+
+def list_archive_facilities(transport: Optional[Transport] = None) -> List[dict]:
+    """Return all feeds that have archive files available.
+
+    Parses the facility <select> on /archive.php, which lists every feed
+    that has audio in the archive (3,400+ entries).
+
+    Returns list of dicts with keys: display_name, facility_key
+    """
+    t = transport or default_transport()
+    html = t.get_text("/archive.php")
+    soup = BeautifulSoup(html, "lxml")
+    selects = soup.find_all("select")
+    if not selects:
+        return []
+    fac_sel = selects[0]
+    return [
+        {"display_name": o.get_text(strip=True), "facility_key": o.get("value", "")}
+        for o in fac_sel.find_all("option")
+    ]
 
 
 def build_archive_url(mount_id: str, date: str, time_z: str) -> str:

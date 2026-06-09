@@ -1,0 +1,12 @@
+unblock_requests
+beautifulsoup4
+lxml
+
+[anon]
+anon_requests
+
+[stealth]
+curl-cffi
+
+[test]
+pytest
