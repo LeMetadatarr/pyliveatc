@@ -5,12 +5,18 @@ The /archive.php page has two <select> elements:
      facility key (e.g. "KJFK-GndTwr") — NOT the Icecast mount_id.
   2. time — "HHMM-HHMMZ" slot options for the current UTC date.
 
-Submitting the form POSTs to /archive.php which redirects to a CDN URL:
-  https://archive.liveatc.net/{mount_id}/{mount_id}-YYYYMMDD-HHMMZ.mp3
+Submitting the form returns short-lived signed URLs for:
+  - MP3: https://archive.liveatc.net/{key}/{filename}.mp3?md5=...&expires=...
+  - M4A: https://www.liveatc.net/archive-cache/{filename}.m4a?md5=...&expires=...
 
-Since we know the mount_id and want specific dates/times, we construct
-archive URLs directly using the well-known pattern rather than scraping
-the form — no form POST needed.
+Direct CDN URLs (without md5/expires params) return "Link Required" — signed
+URLs from the form submission are required. The form is also guarded by
+Cloudflare Turnstile, requiring a real non-headless browser session.
+
+For bulk downloading, use examples/archive_scraper.py which runs inside the
+FlareSolverr Docker container (non-headless Chrome + Xvfb bypasses Turnstile).
+The build_archive_url() helper constructs the static URL pattern for reference
+but these URLs will be rejected by the server without signing.
 """
 import re
 from pathlib import Path
