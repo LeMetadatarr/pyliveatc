@@ -22,6 +22,7 @@ from .archive import (
     fetch_archive_listing,
     list_archive_facilities,
     parse_archive_html,
+    stream_live,
 )
 from .dataset import (
     export_all,
@@ -44,7 +45,7 @@ __all__ = [
     # archive
     "ARCHIVE_TIME_SLOTS",
     "build_archive_url", "download_archive_file", "download_range",
-    "fetch_archive_listing", "list_archive_facilities", "parse_archive_html",
+    "fetch_archive_listing", "list_archive_facilities", "parse_archive_html", "stream_live",
     # dataset
     "export_all", "export_archives_jsonl", "export_feeds_jsonl",
     "export_topfeeds_jsonl",

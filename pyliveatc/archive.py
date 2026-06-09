@@ -140,6 +140,60 @@ def download_archive_file(archive_file: ArchiveFile,
     return out_path
 
 
+def stream_live(mount_id: str, dest_path: str, seconds: int = 30,
+                transport: Optional[Transport] = None) -> int:
+    """Record ``seconds`` of live audio from a mount point to an MP3 file.
+
+    Uses curl_cffi (Chrome impersonation) for the actual stream connection —
+    d.liveatc.net is Cloudflare-protected but curl_cffi bypasses it natively
+    without needing a FlareSolverr session.  Falls back to the provided
+    transport session if curl_cffi is unavailable.
+
+    Returns number of bytes written.
+    """
+    import time as _time
+    url = f"https://d.liveatc.net/{mount_id}"
+    dest = Path(dest_path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from curl_cffi.requests import Session as CurlSession
+        session = CurlSession(impersonate="chrome")
+        r = session.get(url, stream=True)
+        r.raise_for_status()
+        total = 0
+        deadline = _time.monotonic() + seconds
+        with open(dest, "wb") as fh:
+            for chunk in r.iter_content(chunk_size=4096):
+                if not chunk:
+                    continue
+                fh.write(chunk)
+                total += len(chunk)
+                if _time.monotonic() >= deadline:
+                    break
+        r.close()
+        return total
+    except ImportError:
+        pass
+
+    # Fallback: use the provided transport session
+    t = transport or default_transport()
+    r = t.session.get(url, stream=True)
+    r.raise_for_status()
+    total = 0
+    deadline = _time.monotonic() + seconds
+    with open(dest, "wb") as fh:
+        for chunk in r.iter_content(chunk_size=4096):
+            if not chunk:
+                continue
+            fh.write(chunk)
+            total += len(chunk)
+            if _time.monotonic() >= deadline:
+                break
+    r.close()
+    return total
+
+
 def download_range(mount_id: str,
                    date: str,
                    hours: List[int],

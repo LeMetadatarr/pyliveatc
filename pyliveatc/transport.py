@@ -1,13 +1,25 @@
 """HTTP transport for pyliveatc.
 
-LiveATC.net is Cloudflare-protected, so we require unblock_requests'
-CloudflareSession. Optionally layer anon_requests for IP rotation.
+LiveATC.net is Cloudflare-protected. Use FlareSolverr for full access:
+
+  PYLIVEATC_MODE=flaresolverr PYLIVEATC_FLARESOLVERR=http://host:8191 python ...
 
 Environment variables (prefix PYLIVEATC_):
-  PYLIVEATC_MODE        : "curl_cffi" (default) | "requests" | "flaresolverr" | "wayback"
+  PYLIVEATC_MODE        : "flaresolverr" (recommended) | "curl_cffi" | "requests" | "wayback"
+  PYLIVEATC_FLARESOLVERR: FlareSolverr base URL, e.g. http://192.168.1.116:8191
+                          (do NOT include /v1 — appended automatically by unblock_requests)
   PYLIVEATC_ANON        : "1" to enable IP rotation via anon_requests
   PYLIVEATC_DELAY       : float seconds between requests (default 1.5)
-  PYLIVEATC_FLARESOLVERR: flaresolverr URL when MODE=flaresolverr
+
+Access notes:
+  - Scraping (search, feedindex, topfeeds): works via flaresolverr or wayback.
+  - Live streams (d.liveatc.net): require a valid cf_clearance cookie from
+    www.liveatc.net — FlareSolverr solves this; use get_stream_url() then
+    stream_bytes() with the returned session/cookies.
+  - Archive downloads: LiveATC now issues short-lived signed URLs via a
+    Turnstile-protected form (archive-response.php). Direct CDN links are
+    rejected with "Link Required". Automation requires a full browser session
+    that can solve the Turnstile widget and submit the archive form.
 """
 import os
 import time
@@ -15,11 +27,7 @@ from typing import Optional
 
 BASE_URL = "https://www.liveatc.net"
 ARCHIVE_BASE = "https://archive.liveatc.net"
-
-# Live stream base — real servers are s{N}-fmt2.liveatc.net or s{N}-{city}.liveatc.net.
-# The stream URL with a nocache token is returned by hlisten.php; without it all
-# stream/archive subdomains return 403 (Cloudflare-gated, requires CF clearance cookie).
-STREAM_BASE = "http://d.liveatc.net"  # canonical redirect alias
+STREAM_BASE = "https://d.liveatc.net"
 
 _ENV = "PYLIVEATC_"
 _DEFAULT_DELAY = float(os.environ.get(f"{_ENV}DELAY", "1.5"))
@@ -27,6 +35,14 @@ _DEFAULT_DELAY = float(os.environ.get(f"{_ENV}DELAY", "1.5"))
 _last_request: float = 0.0
 _min_delay: float = _DEFAULT_DELAY
 _default_transport: Optional["Transport"] = None
+
+
+def _strip_v1(url: str) -> str:
+    """Normalise FlareSolverr URL — strip trailing /v1 if present.
+
+    unblock_requests appends /v1 itself; passing it twice causes 404.
+    """
+    return url.rstrip("/").removesuffix("/v1")
 
 
 def set_delay(seconds: float) -> None:
@@ -50,9 +66,8 @@ class Transport:
                  flaresolverr_url: Optional[str] = None):
         self._mode = mode or os.environ.get(f"{_ENV}MODE", "curl_cffi")
         self._anon = anon or bool(os.environ.get(f"{_ENV}ANON"))
-        self._flaresolverr_url = flaresolverr_url or os.environ.get(
-            f"{_ENV}FLARESOLVERR", "http://localhost:8191/v1"
-        )
+        raw_fs = flaresolverr_url or os.environ.get(f"{_ENV}FLARESOLVERR", "http://localhost:8191")
+        self._flaresolverr_url = _strip_v1(raw_fs)
         self._session = None
 
     @property
@@ -69,7 +84,8 @@ class Transport:
         if self._mode == "flaresolverr":
             from unblock_requests import CloudflareSession
             return CloudflareSession(mode="flaresolverr",
-                                     flaresolverr_url=self._flaresolverr_url)
+                                     flaresolverr_url=self._flaresolverr_url,
+                                     flaresolverr_timeout_ms=120_000)
 
         try:
             from unblock_requests import CloudflareSession
@@ -105,6 +121,55 @@ class Transport:
         r = self.session.get(url, **kwargs)
         r.raise_for_status()
         return r.content
+
+    def get_cf_cookies(self) -> dict:
+        """Return Cloudflare clearance cookies from the current session.
+
+        With FlareSolverr mode the session already holds cf_clearance after
+        the first request.  In other modes this returns an empty dict.
+        """
+        try:
+            jar = self.session.cookies
+            return {c.name: c.value for c in jar} if hasattr(jar, "__iter__") else {}
+        except Exception:
+            return {}
+
+    def stream_bytes(self, url: str, nbytes: int = 65536, **kwargs) -> bytes:
+        """Read ``nbytes`` from a streaming URL (e.g. a live Icecast stream).
+
+        Uses curl_cffi (Chrome impersonation) which bypasses Cloudflare natively
+        on d.liveatc.net.  Falls back to the configured session if curl_cffi is
+        unavailable.
+        """
+        try:
+            from curl_cffi.requests import Session as CurlSession
+            _throttle()
+            with CurlSession(impersonate="chrome") as cs:
+                r = cs.get(url, stream=True, **kwargs)
+                r.raise_for_status()
+                chunks = []
+                got = 0
+                for chunk in r.iter_content(chunk_size=min(nbytes, 8192)):
+                    chunks.append(chunk)
+                    got += len(chunk)
+                    if got >= nbytes:
+                        break
+                r.close()
+                return b"".join(chunks)[:nbytes]
+        except ImportError:
+            pass
+        _throttle()
+        r = self.session.get(url, stream=True, **kwargs)
+        r.raise_for_status()
+        chunks = []
+        got = 0
+        for chunk in r.iter_content(chunk_size=min(nbytes, 8192)):
+            chunks.append(chunk)
+            got += len(chunk)
+            if got >= nbytes:
+                break
+        r.close()
+        return b"".join(chunks)[:nbytes]
 
     def close(self) -> None:
         if self._session is not None:
