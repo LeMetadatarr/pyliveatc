@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyliveatc"
+dynamic = ["version"]
+description = "LiveATC.net ATC audio feed client — search, stream, archive download, dataset export"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "JarbasAi", email = "jarbasai@mailfence.com" }]
+requires-python = ">=3.9"
+dependencies = [
+    "unblock_requests",
+    "beautifulsoup4",
+    "lxml",
+]
+
+[project.optional-dependencies]
+anon = ["anon_requests"]
+stealth = ["curl-cffi"]
+test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/TigreGotico/pyliveatc"
+Repository = "https://github.com/TigreGotico/pyliveatc"
+
+[tool.pytest.ini_options]
+markers = [
+    "live: hits liveatc.net (network required)",
+    "slow: long-running test",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyliveatc*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pyliveatc.version.__version__" }

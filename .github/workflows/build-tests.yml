@@ -1,0 +1,14 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+jobs:
+  test:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/build_tests.yml@dev
+    with:
+      python_matrix: "['3.9', '3.10', '3.11', '3.12']"
+      test_extra: test
