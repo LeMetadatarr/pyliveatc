@@ -6,6 +6,7 @@ from .scraper import (
     FEED_TYPES,
     fetch_feedindex,
     fetch_topfeeds,
+    get_stream_url,
     iter_all_feeds,
     iter_feedindex,
     parse_feedindex_html,
@@ -37,9 +38,9 @@ __all__ = [
     "Transport", "default_transport", "reset_default_transport", "set_delay",
     # scraper
     "FEED_TYPES",
-    "fetch_feedindex", "fetch_topfeeds", "iter_all_feeds", "iter_feedindex",
-    "parse_feedindex_html", "parse_search_html", "parse_topfeeds_html",
-    "search",
+    "fetch_feedindex", "fetch_topfeeds", "get_stream_url", "iter_all_feeds",
+    "iter_feedindex", "parse_feedindex_html", "parse_search_html",
+    "parse_topfeeds_html", "search",
     # archive
     "ARCHIVE_TIME_SLOTS",
     "build_archive_url", "download_archive_file", "download_range",

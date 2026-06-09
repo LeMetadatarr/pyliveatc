@@ -16,6 +16,11 @@ from typing import Optional
 BASE_URL = "https://www.liveatc.net"
 ARCHIVE_BASE = "https://archive.liveatc.net"
 
+# Live stream base — real servers are s{N}-fmt2.liveatc.net or s{N}-{city}.liveatc.net.
+# The stream URL with a nocache token is returned by hlisten.php; without it all
+# stream/archive subdomains return 403 (Cloudflare-gated, requires CF clearance cookie).
+STREAM_BASE = "http://d.liveatc.net"  # canonical redirect alias
+
 _ENV = "PYLIVEATC_"
 _DEFAULT_DELAY = float(os.environ.get(f"{_ENV}DELAY", "1.5"))
 

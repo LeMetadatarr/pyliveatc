@@ -140,7 +140,7 @@ def analyse_facilities(facilities):
 
 SEGMENTS_PER_DAY = 48          # 30-min segments
 SEGMENT_DURATION_MIN = 30
-ARCHIVE_DAYS_ESTIMATE = 14     # LiveATC keeps ~2 weeks per feed
+ARCHIVE_DAYS_ESTIMATE = 7      # LiveATC keeps ~7 days per feed (confirmed from JS)
 MP3_BITRATE_KBPS = 16
 SEGMENT_SIZE_MB = (MP3_BITRATE_KBPS * 1000 / 8) * (SEGMENT_DURATION_MIN * 60) / 1_000_000
 

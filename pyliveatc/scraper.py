@@ -216,6 +216,31 @@ def iter_feedindex(feed_type: str = "all",
     yield from fetch_feedindex(feed_type=feed_type, transport=transport)
 
 
+_AUDIO_SRC_RE = re.compile(r'<audio[^>]+src="(https?://[^"]+liveatc\.net/[^"?]+)', re.IGNORECASE)
+
+
+def get_stream_url(mount_id: str, icao: str = "",
+                   transport: Optional[Transport] = None) -> Optional[str]:
+    """Return the authenticated live stream URL for a mount point.
+
+    LiveATC embeds the real server URL (e.g. ``https://s1-fmt2.liveatc.net/kjfk9_s``)
+    inside the ``hlisten.php`` popup player page.  The URL works only when the
+    request carries valid Cloudflare clearance cookies — i.e. when the same
+    session already solved the CF challenge on ``www.liveatc.net``.
+
+    Returns the stream URL string, or None if the page was unreachable / unparseable.
+    """
+    t = transport or default_transport()
+    try:
+        html = t.get_text("/hlisten.php", params={"mount": mount_id, "icao": icao or mount_id[:4]})
+    except Exception:
+        return None
+    m = _AUDIO_SRC_RE.search(html)
+    if m:
+        return m.group(1)
+    return None
+
+
 def iter_all_feeds(transport: Optional[Transport] = None) -> Iterator[Feed]:
     """Yield every feed across all known feed types (deduped by mount_id)."""
     seen = set()
