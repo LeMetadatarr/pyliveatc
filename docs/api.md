@@ -1,4 +1,4 @@
-# LiveATC.net — Reverse-Engineered API Reference
+# LiveATC.net API Reference (Reverse-Engineered)
 
 ## Base URLs
 
@@ -10,13 +10,13 @@
 
 ## Pages
 
-### Top Feeds — `/topfeeds.php`
+### Top Feeds: `/topfeeds.php`
 
 No parameters. Lists top-50 feeds by current listener count.
 
 **HTML structure:** `<table>` with rows: rank (numeric td), title/link td containing `<a href="/archive.php?m={mount_id}">`, listener count td, status td.
 
-### Search by ICAO — `/search/?icao={ICAO}`
+### Search by ICAO: `/search/?icao={ICAO}`
 
 | Param | Description |
 |-------|-------------|
@@ -24,14 +24,14 @@ No parameters. Lists top-50 feeds by current listener count.
 
 **HTML structure:**
 - One `<table class="body">` per feed containing:
-  - `<strong>` — feed title
-  - `<font>` — "UP" or "DOWN" status text
-  - `<a href="/archive.php?m={mount_id}">` — archive link (source of mount_id)
+  - `<strong>`: feed title
+  - `<font>`: "UP" or "DOWN" status text
+  - `<a href="/archive.php?m={mount_id}">`: archive link (source of mount_id)
 - One `<table class="freqTable">` per feed (paired by index) containing:
   - Header row `<tr><th>Function</th><th>Frequency</th></tr>`
   - Data rows `<tr><td>Ground</td><td>121.900</td></tr>`
 
-### Feed Index — `/feedindex.php?type={type}`
+### Feed Index: `/feedindex.php?type={type}`
 
 | `type` value | Description |
 |---|---|
@@ -46,7 +46,7 @@ No parameters. Lists top-50 feeds by current listener count.
 
 Same HTML structure as `/search/`.
 
-### Archive Listing — `/archive.php?m={mount_id}`
+### Archive Listing: `/archive.php?m={mount_id}`
 
 | Param | Description |
 |-------|-------------|
@@ -61,7 +61,7 @@ Direct MP3 URL pattern:
 https://archive.liveatc.net/{mount_id}/{mount_id}-{YYYYMMDD}-{HHMM}Z.mp3
 ```
 
-Files are 30-minute segments. Hours run 0000Z–2330Z.
+Files are 30-minute segments. Hours run from 0000Z to 2330Z.
 
 ## Live Stream
 
@@ -74,10 +74,13 @@ Audio format: MP3, 16 kbps CBR, 22050 Hz, mono.
 
 ## Mount ID Format
 
-Mount IDs follow the pattern `{icao}_{function}`, e.g.:
-- `kjfk_app` — KJFK Approach/Departure
-- `kjfk_gnd_twr` — KJFK Ground/Tower
-- `klax_south_tower` — KLAX South Tower
-- `egll_tower` — EGLL (Heathrow) Tower
+Mount IDs follow the pattern `{icao}_{function}`, for example:
+- `kjfk_app`: KJFK Approach/Departure
+- `kjfk_gnd_twr`: KJFK Ground/Tower
+- `klax_south_tower`: KLAX South Tower
+- `egll_tower`: EGLL (Heathrow) Tower
 
 The ICAO prefix is the first 4 characters.
+
+---
+[Home](README.md) · [Usage →](usage.md)

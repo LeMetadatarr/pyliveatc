@@ -26,7 +26,7 @@ for feed in feeds:
 from pyliveatc import fetch_topfeeds
 
 for tf in fetch_topfeeds():
-    print(f"#{tf.rank} {tf.title} — {tf.listener_count} listeners")
+    print(f"#{tf.rank} {tf.title}: {tf.listener_count} listeners")
 ```
 
 ## Browse by category
@@ -60,7 +60,7 @@ from pyliveatc import download_range
 paths = download_range(
     mount_id="kjfk_app",
     date="20260609",    # YYYYMMDD
-    hours=[12, 13],     # UTC hours — each yields 2 × 30-min files
+    hours=[12, 13],     # UTC hours, each yields 2 x 30-min files
     dest_dir="./audio",
 )
 for p in paths:
@@ -85,3 +85,6 @@ t.close()
 | `PYLIVEATC_ANON` | unset | Set to `1` to enable IP rotation |
 | `PYLIVEATC_DELAY` | `1.5` | Seconds between requests |
 | `PYLIVEATC_FLARESOLVERR` | `http://localhost:8191/v1` | FlareSolverr URL |
+
+---
+[← API](api.md) · [Home](README.md) · [Architecture →](architecture.md)

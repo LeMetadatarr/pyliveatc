@@ -4,12 +4,12 @@
 
 ```
 pyliveatc/
-├── transport.py   — HTTP layer (CF bypass, throttle, env config)
-├── models.py      — Frozen dataclasses (Feed, TopFeed, Frequency, ArchiveFile)
-├── scraper.py     — HTML parsers for each page; public search/fetch functions
-├── archive.py     — Archive listing parser + MP3 downloader
-├── dataset.py     — JSONL export + full crawl
-└── __main__.py    — CLI dispatcher
+├── transport.py   HTTP layer (CF bypass, throttle, env config)
+├── models.py      Frozen dataclasses (Feed, TopFeed, Frequency, ArchiveFile)
+├── scraper.py     HTML parsers for each page; public search/fetch functions
+├── archive.py     Archive listing parser + MP3 downloader
+├── dataset.py     JSONL export + full crawl
+└── __main__.py    CLI dispatcher
 ```
 
 ## Data flow
@@ -25,17 +25,20 @@ download()     →  Transport.get_bytes()→ GET archive.liveatc.net → write b
 
 ## Transport
 
-`Transport` wraps `unblock_requests.CloudflareSession`. LiveATC.net sits behind Cloudflare managed challenge — `curl_cffi` TLS impersonation is sufficient; JS challenge mode is rare. Rate limiting (default 1.5s between requests) is enforced at `_throttle()`.
+`Transport` wraps `unblock_requests.CloudflareSession`. LiveATC.net sits behind a Cloudflare managed challenge. `curl_cffi` TLS impersonation handles most cases. JS challenge mode is rare. `_throttle()` enforces rate limiting (1.5 seconds between requests by default).
 
 ## HTML parsing strategy
 
-All three listing pages (`/topfeeds.php`, `/search/`, `/feedindex.php`) share the same table-based HTML structure. Parsers use BeautifulSoup with `lxml` backend:
+All three listing pages (`/topfeeds.php`, `/search/`, `/feedindex.php`) share the same table-based HTML structure. Parsers use BeautifulSoup with the `lxml` backend:
 
-- Feed block: `table.body` — title in `<strong>`, status in `<font>`, mount_id from `<a href="/archive.php?m=...">` via regex `m=([a-zA-Z0-9_]+)`
-- Frequency block: `table.freqTable` — rows paired 1:1 with feed blocks by index
+- Feed block: `table.body`, title in `<strong>`, status in `<font>`, mount_id from `<a href="/archive.php?m=...">` via regex `m=([a-zA-Z0-9_]+)`
+- Frequency block: `table.freqTable`, rows paired 1:1 with feed blocks by index
 
 Top feeds page uses a plain `<table>` with numeric rank in the first `<td>`.
 
 ## Archive
 
-Archive filenames encode all metadata: `{mount_id}-{YYYYMMDD}-{HHMM}Z.mp3`. The archive page lists them as `<option>` values. The CDN URL is constructed directly without a round-trip: `https://archive.liveatc.net/{mount_id}/{filename}`.
+Archive filenames encode all metadata: `{mount_id}-{YYYYMMDD}-{HHMM}Z.mp3`. The archive page lists them as `<option>` values. pyliveatc builds the CDN URL directly, without a round-trip: `https://archive.liveatc.net/{mount_id}/{filename}`.
+
+---
+[← Usage](usage.md) · [Home](README.md) · [Dataset →](dataset.md)
