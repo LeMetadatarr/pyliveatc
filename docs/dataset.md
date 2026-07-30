@@ -2,7 +2,7 @@
 
 ## Configs
 
-### `feeds` — Feed metadata catalog
+### `feeds`: Feed metadata catalog
 
 One row per unique feed across all feed types.
 
@@ -16,11 +16,11 @@ One row per unique feed across all feed types.
 | `archive_url` | str | Archive listing page URL |
 | `frequencies` | list[{title, frequency}] | Associated ATC frequencies |
 
-### `topfeeds` — Top-50 by listener count
+### `topfeeds`: Top-50 by listener count
 
 Adds `rank` (int) and `listener_count` (int) to the feeds schema.
 
-### `archives` — Archive file inventory
+### `archives`: Archive file inventory
 
 One row per 30-minute MP3 segment (requires per-mount archive scraping).
 
@@ -34,9 +34,9 @@ One row per 30-minute MP3 segment (requires per-mount archive scraping).
 
 ## ML suitability
 
-- **Feed catalog** — airport code ↔ frequency ↔ ATC function mapping; useful for intent classification ("what frequency is JFK tower?")
-- **Archive audio** — 30-min MP3 segments of real ATC radio; suitable for ASR fine-tuning, speaker diarization, radio-domain language modeling, noise-robustness training
-- **Listener counts** — proxy for airport busyness; potential feature for traffic-prediction models
+- **Feed catalog**: maps airport code to frequency to ATC function. Use it for intent classification, for example "what frequency is JFK tower?"
+- **Archive audio**: 30-minute MP3 segments of real ATC radio. Use it for ASR fine-tuning, speaker diarization, radio-domain language modeling, and noise-robustness training.
+- **Listener counts**: a proxy for airport busyness. Use it as a feature for traffic-prediction models.
 
 ## Export
 
@@ -50,3 +50,6 @@ counts = export_all(
 # writes: feeds_class_b.jsonl, feeds_international_eu.jsonl,
 #         feeds_all.jsonl, topfeeds.jsonl, manifest.json
 ```
+
+---
+[← Architecture](architecture.md) · [Home](README.md) · [CLI →](cli.md)
