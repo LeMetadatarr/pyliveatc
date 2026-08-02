@@ -51,8 +51,8 @@ See [`docs/`](docs/) for the full API reference, usage examples, architecture no
 
 ## Related projects
 
-- [TigreGotico/unblock_requests](https://github.com/TigreGotico/unblock_requests): the `requests.Session` subclass pyliveatc uses to bypass Cloudflare.
-- [TigreGotico/anon_requests](https://github.com/TigreGotico/anon_requests): the optional anonymity layer behind the `anon` extra's IP rotation.
+- [LeMetadatarr/unblock_requests](https://github.com/LeMetadatarr/unblock_requests): the `requests.Session` subclass pyliveatc uses to bypass Cloudflare.
+- [LeMetadatarr/anon_requests](https://github.com/LeMetadatarr/anon_requests): the optional anonymity layer behind the `anon` extra's IP rotation.
 
 ## License
 

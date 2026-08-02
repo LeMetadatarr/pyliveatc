@@ -84,7 +84,7 @@ t.close()
 | `PYLIVEATC_MODE` | `curl_cffi` | Transport mode: `curl_cffi`, `requests`, `flaresolverr`, `wayback` |
 | `PYLIVEATC_ANON` | unset | Set to `1` to enable IP rotation |
 | `PYLIVEATC_DELAY` | `1.5` | Seconds between requests |
-| `PYLIVEATC_FLARESOLVERR` | `http://localhost:8191/v1` | FlareSolverr URL |
+| `PYLIVEATC_FLARESOLVERR` | `http://localhost:8191` | FlareSolverr URL (without trailing `/v1`) |
 
 ---
 [← API](api.md) · [Home](README.md) · [Architecture →](architecture.md)

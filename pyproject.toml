@@ -22,8 +22,8 @@ stealth = ["curl-cffi"]
 test = ["pytest"]
 
 [project.urls]
-Homepage = "https://github.com/TigreGotico/pyliveatc"
-Repository = "https://github.com/TigreGotico/pyliveatc"
+Homepage = "https://github.com/LeMetadatarr/pyliveatc"
+Repository = "https://github.com/LeMetadatarr/pyliveatc"
 
 [tool.pytest.ini_options]
 markers = [
