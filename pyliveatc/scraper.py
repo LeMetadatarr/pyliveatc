@@ -53,16 +53,38 @@ def _extract_mount(tag) -> Optional[str]:
 # Top feeds
 # ---------------------------------------------------------------------------
 
+_ONCLICK_MOUNT_RE = re.compile(r"myHTML5Popup\('([^']+)'")
+
+
+def _extract_topfeed_mount(tag) -> Optional[str]:
+    """Extract the mount id from a topfeeds row.
+
+    The live topfeeds.php page (as of 2026) does not link to archive.php
+    from the ranking table — it embeds the mount id as the first argument
+    of the ``onclick="myHTML5Popup('mount_id','icao')"`` handler on the
+    "Tune In" play button. Older/alternate page layouts linked directly to
+    ``archive.php?m=...``, so that form is tried first for back-compat.
+    """
+    mount_id = _extract_mount(tag)
+    if mount_id:
+        return mount_id
+    link = tag.find("a", onclick=_ONCLICK_MOUNT_RE)
+    if not link:
+        return None
+    m = _ONCLICK_MOUNT_RE.search(link["onclick"])
+    return m.group(1) if m else None
+
+
 def parse_topfeeds_html(html: str) -> List[TopFeed]:
     """Parse /topfeeds.php → list of TopFeed (ranked by listeners)."""
     soup = BeautifulSoup(html, "lxml")
     results = []
 
-    # Top feeds page uses a table with rows: rank | title/link | listeners | status
-    # Try to find the main data table
-    tables = soup.find_all("table")
-    for table in tables:
-        rows = table.find_all("tr")
+    # Top feeds page uses a table with rows: rank | listeners | title/link | ...
+    table = soup.find("table", class_="topTable")
+    tables = [table] if table is not None else soup.find_all("table")
+    for tbl in tables:
+        rows = tbl.find_all("tr")
         for row in rows:
             cols = row.find_all("td")
             if len(cols) < 3:
@@ -74,25 +96,26 @@ def parse_topfeeds_html(html: str) -> List[TopFeed]:
                 continue
 
             rank = int(rank_text)
-            title_col = cols[1]
+            listeners_text = cols[1].get_text(strip=True).replace(",", "")
+            title_col = cols[2]
             title = title_col.get_text(strip=True)
 
-            # Extract mount id from archive link
-            mount_id = _extract_mount(title_col)
-            if not mount_id:
-                # Try to get from any link in row
-                mount_id = _extract_mount(row)
+            if not listeners_text.isdigit():
+                # Older layout: listeners/title columns are swapped.
+                listeners_text, title_col = cols[2].get_text(strip=True).replace(",", ""), cols[1]
+                title = title_col.get_text(strip=True)
+
+            mount_id = _extract_topfeed_mount(title_col) or _extract_topfeed_mount(row)
             if not mount_id:
                 continue
 
-            # Listener count
-            listeners_text = cols[2].get_text(strip=True).replace(",", "")
             try:
                 listener_count = int(listeners_text)
             except ValueError:
                 listener_count = 0
 
-            # Status — look for UP/DOWN text
+            # Status — look for UP/DOWN text (older layout only; the live
+            # page carries no per-row status, so default to up).
             up = True
             for col in cols[3:]:
                 txt = col.get_text(strip=True).upper()
@@ -130,7 +153,8 @@ def parse_search_html(html: str) -> List[Feed]:
     freq_tables = soup.find_all("table", class_="freqTable")
 
     results = []
-    for i, station in enumerate(stations):
+    freq_idx = 0
+    for station in stations:
         strong = station.find("strong")
         if not strong:
             continue
@@ -144,8 +168,9 @@ def parse_search_html(html: str) -> List[Feed]:
         up = font.get_text(strip=True).upper() == "UP" if font else False
 
         freqs = ()
-        if i < len(freq_tables):
-            freqs = _parse_freq_table(freq_tables[i])
+        if freq_idx < len(freq_tables):
+            freqs = _parse_freq_table(freq_tables[freq_idx])
+        freq_idx += 1
 
         results.append(Feed(
             mount_id=mount_id,
@@ -175,7 +200,8 @@ def parse_feedindex_html(html: str) -> List[Feed]:
     freq_tables = soup.find_all("table", class_="freqTable")
 
     results = []
-    for i, station in enumerate(stations):
+    freq_idx = 0
+    for station in stations:
         strong = station.find("strong")
         if not strong:
             continue
@@ -189,8 +215,9 @@ def parse_feedindex_html(html: str) -> List[Feed]:
         up = font.get_text(strip=True).upper() == "UP" if font else False
 
         freqs = ()
-        if i < len(freq_tables):
-            freqs = _parse_freq_table(freq_tables[i])
+        if freq_idx < len(freq_tables):
+            freqs = _parse_freq_table(freq_tables[freq_idx])
+        freq_idx += 1
 
         results.append(Feed(
             mount_id=mount_id,
