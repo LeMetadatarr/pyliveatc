@@ -52,6 +52,25 @@ for af in files[:5]:
     print(af.filename, af.url)
 ```
 
+## Resolve the live stream URL
+
+```python
+from pyliveatc import get_stream_url
+
+url = get_stream_url("kjfk_gnd", icao="kjfk")
+# "https://s1-bos.liveatc.net/kjfk_gnd" (or None if the page was
+# unreachable/unparseable — see the Access notes in transport.py)
+```
+
+## List archived facilities
+
+```python
+from pyliveatc import list_archive_facilities
+
+for facility in list_archive_facilities()[:5]:
+    print(facility["display_name"], facility["facility_key"])
+```
+
 ## Download archive audio
 
 ```python
